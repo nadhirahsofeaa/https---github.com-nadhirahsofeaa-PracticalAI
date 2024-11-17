@@ -1,12 +1,23 @@
+import os
+from dotenv import load_dotenv
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from msrest.authentication import CognitiveServicesCredentials
 from azure.cognitiveservices.vision.computervision.models import OperationStatusCodes
 import time
 
-endpoint = "ENTER ENDPOINT HERE"
-key = "ENTER KEY HERE"
+# Load environment variables from .env file
+load_dotenv()
 
-credentials = CognitiveServicesCredentials(key)
+# Retrieve the endpoint and key from environment variables
+endpoint = os.getenv("AZURE_ENDPOINT")
+subscription_key = os.getenv("AZURE_SUBSCRIPTION_KEY")
+
+# Ensure the environment variables were loaded correctly
+if not endpoint or not subscription_key:
+    raise ValueError("AZURE_ENDPOINT or AZURE_SUBSCRIPTION_KEY not set in environment variables")
+
+# Use the subscription_key for the credentials
+credentials = CognitiveServicesCredentials(subscription_key)
 
 client = ComputerVisionClient(
     endpoint=endpoint,
@@ -27,18 +38,18 @@ def read_image(uri):
 
     # SDK call
     result = client.get_read_result(operationId)
-    
+
     # Try API
     retry = 0
-    
+
     while retry < maxRetries:
-        if result.status.lower () not in ['notstarted', 'running']:
+        if result.status.lower() not in ['notstarted', 'running']:
             break
         time.sleep(1)
         result = client.get_read_result(operationId)
-        
+
         retry += 1
-    
+
     if retry == maxRetries:
         return "max retries reached"
 
